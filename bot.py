@@ -3,11 +3,47 @@ import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
-# טוכן הבוט שלך (תשים את זה ב-environment variable או כאן)
-BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"
+# ====================
+# הגדרות חיבור
+# ====================
 
-# נתיב לשמירת התקדמות משתמשים
+# טוכן הבוט - מומלץ להשתמש ב-environment variable
+BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+
+# MongoDB URI - מומלץ להשתמש ב-environment variable
+MONGODB_URI = os.environ.get("MONGODB_URI", "")
+
+# האם להשתמש ב-MongoDB (אם יש URI)
+USE_MONGODB = bool(MONGODB_URI)
+
+# נתיב לקובץ JSON (fallback לפיתוח מקומי)
 USER_DATA_FILE = "user_progress.json"
+
+# ====================
+# ייבוא MongoDB (אם נדרש)
+# ====================
+
+if USE_MONGODB:
+    try:
+        from pymongo import MongoClient
+        from pymongo.errors import ConnectionFailure
+        
+        # חיבור ל-MongoDB
+        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        # בדיקת חיבור
+        client.admin.command('ping')
+        db = client['python_learning_bot']
+        users_collection = db['users']
+        
+        print("✅ MongoDB מחובר בהצלחה!")
+    except ConnectionFailure:
+        print("⚠️ שגיאה בחיבור ל-MongoDB, משתמש ב-JSON")
+        USE_MONGODB = False
+    except ImportError:
+        print("⚠️ pymongo לא מותקן, משתמש ב-JSON")
+        USE_MONGODB = False
+else:
+    print("📝 משתמש ב-JSON לשמירת נתונים (פיתוח מקומי)")
 
 # ====================
 # תוכן השיעורים - 20 שיעורים מלאים!
@@ -818,34 +854,54 @@ greet("שלום", "דני", "שרה", "יוסי")
 }
 
 # ====================
-# פונקציות עזר
+# פונקציות עזר לניהול נתונים
 # ====================
 
 def load_user_progress():
-    """טוען את התקדמות המשתמשים"""
-    if os.path.exists(USER_DATA_FILE):
-        with open(USER_DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {}
+    """טוען את התקדמות המשתמשים מ-MongoDB או JSON"""
+    if USE_MONGODB:
+        # MongoDB: מחזיר dict ריק, נטען לפי צורך
+        return {}
+    else:
+        # JSON: טוען מקובץ
+        if os.path.exists(USER_DATA_FILE):
+            with open(USER_DATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
 
 def save_user_progress(data):
-    """שומר את התקדמות המשתמשים"""
-    with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    """שומר את התקדמות המשתמשים ל-MongoDB או JSON"""
+    if not USE_MONGODB:
+        # JSON בלבד
+        with open(USER_DATA_FILE, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
 def get_user_lesson(user_id):
     """מחזיר את מספר השיעור הנוכחי של המשתמש"""
-    progress = load_user_progress()
-    return progress.get(str(user_id), {}).get("current_lesson", 1)
+    if USE_MONGODB:
+        user = users_collection.find_one({"user_id": user_id})
+        if user:
+            return user.get("current_lesson", 1)
+        return 1
+    else:
+        progress = load_user_progress()
+        return progress.get(str(user_id), {}).get("current_lesson", 1)
 
 def set_user_lesson(user_id, lesson_number):
     """מעדכן את מספר השיעור של המשתמש"""
-    progress = load_user_progress()
-    user_id_str = str(user_id)
-    if user_id_str not in progress:
-        progress[user_id_str] = {}
-    progress[user_id_str]["current_lesson"] = lesson_number
-    save_user_progress(progress)
+    if USE_MONGODB:
+        users_collection.update_one(
+            {"user_id": user_id},
+            {"$set": {"current_lesson": lesson_number, "user_id": user_id}},
+            upsert=True
+        )
+    else:
+        progress = load_user_progress()
+        user_id_str = str(user_id)
+        if user_id_str not in progress:
+            progress[user_id_str] = {}
+        progress[user_id_str]["current_lesson"] = lesson_number
+        save_user_progress(progress)
 
 def create_main_menu():
     """יוצר את התפריט הראשי"""
@@ -886,8 +942,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = user.id
     
     # אם זה משתמש חדש, שומרים אותו
-    progress = load_user_progress()
-    if str(user_id) not in progress:
+    current_lesson = get_user_lesson(user_id)
+    if current_lesson == 1 and (not USE_MONGODB or not users_collection.find_one({"user_id": user_id})):
         set_user_lesson(user_id, 1)
     
     welcome_text = f"""
@@ -1192,6 +1248,11 @@ def main():
     """נקודת הכניסה של הבוט"""
     print("🤖 הבוט מתחיל...")
     print(f"📚 טוען {len(LESSONS)} שיעורים...")
+    
+    if USE_MONGODB:
+        print("💾 משתמש ב-MongoDB לשמירת נתונים (קבוע!)")
+    else:
+        print("📝 משתמש ב-JSON לשמירת נתונים (זמני - מתאים לפיתוח בלבד!)")
     
     # יצירת האפליקציה
     application = Application.builder().token(BOT_TOKEN).build()
