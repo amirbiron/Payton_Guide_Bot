@@ -7,7 +7,7 @@
 LESSONS_PART5 = {
     21: {
         'title': '🌐 שיעור 21: Web Scraping - איסוף מידע מהאינטרנט',
-        'content': """
+        'content': r'''
 בואו נלמד איך לאסוף מידע מאתרי אינטרנט! 🕷️
 
 🎯 <b>מה זה Web Scraping?</b>
@@ -211,7 +211,7 @@ for product in products:
 • שקול אם יש API - זה יותר טוב!
 • שמור את הנתונים לפני עיבוד נוסף
 • טפל טוב בשגיאות
-""",
+''',
         'exercise': {
             'question': 'איזו ספרייה משמשת לפירוש HTML ב-Python?',
             'options': ['requests', 'BeautifulSoup', 'json', 'urllib'],
@@ -222,7 +222,7 @@ for product in products:
     
     22: {
         'title': '🔐 שיעור 22: עבודה עם Regex - ביטויים רגולריים',
-        'content': """
+        'content': r'''
 בואו נלמד כלי עוצמתי לעבודה עם טקסט! 🔍
 
 🎯 <b>מה זה Regex?</b>
@@ -418,18 +418,18 @@ numbers2 = pattern.findall('ו-30 אגורות')</code>
 • התחל פשוט ובנה בהדרגה
 • Regex לא תמיד הפתרון הטוב ביותר
 • תיעד regex מסובכים עם הערות
-""",
+''',
         'exercise': {
             'question': 'איזה pattern מתאים למספר טלפון בפורמט 05X-XXXXXXX?',
             'options': [r'05\d-\d{7}', r'^05\d-\d{7}$', r'05[0-9]-[0-9]{7}', r'^05\d{1}-\d{7}$'],
             'correct_answer': r'^05\d{1}-\d{7}$',
-            'explanation': 'מצוין! 🎯 ^ ו-$ מוודאים שזה כל המחרוזת, \d{1} זו ספרה אחת, ו-\d{7} זה 7 ספרות'
+            'explanation': r'מצוין! 🎯 ^ ו-$ מוודאים שזה כל המחרוזת, \d{1} זו ספרה אחת, ו-\d{7} זה 7 ספרות'
         }
     },
     
     23: {
         'title': '⚡ שיעור 23: Async/Await - תכנות אסינכרוני',
-        'content': """
+        'content': r'''
 בואו נלמד איך לכתוב קוד שיכול לעשות כמה דברים בבת אחת! ⚡
 
 🎯 <b>מה זה תכנות אסינכרוני?</b>
@@ -699,7 +699,7 @@ asyncio.run(main())</code>
 • טפל בשגיאות עם try/except
 • שימו לב ל-deadlocks (המתנות הדדיות)
 • לא מהיר יותר ל-CPU bound!
-""",
+''',
         'exercise': {
             'question': 'מה המילה השמורה לקריאה לפונקציה אסינכרונית?',
             'options': ['wait', 'await', 'async', 'sleep'],
@@ -710,7 +710,7 @@ asyncio.run(main())</code>
     
     24: {
         'title': '🧪 שיעור 24: Testing - בדיקות אוטומטיות',
-        'content': """
+        'content': r'''
 בואו נלמד איך לוודא שהקוד שלנו עובד! 🧪
 
 🎯 <b>למה צריך בדיקות?</b>
@@ -1029,7 +1029,7 @@ pytest -k "test_add"  # רק בדיקות עם "test_add" בשם</code>
 • אל תבדוק implementation details
 • בדוק behavior, לא code
 • השתמש ב-CI/CD להרצת בדיקות אוטומטית
-""",
+''',
         'exercise': {
             'question': 'איזו פקודה מריצה בדיקות עם pytest?',
             'options': ['python test.py', 'pytest', 'unittest run', 'test --run'],
@@ -1040,7 +1040,7 @@ pytest -k "test_add"  # רק בדיקות עם "test_add" בשם</code>
     
     25: {
         'title': '🎓 שיעור 25: Type Hints ו-Clean Code',
-        'content': """
+        'content': r'''
 בואו נלמד איך לכתוב קוד נקי ומקצועי! ✨
 
 🎯 <b>Type Hints - מה זה?</b>
@@ -1387,7 +1387,7 @@ def calculate_cart_total(items: List[Dict[str, float]]) -> float:
 "כל טיפש יכול לכתוב קוד שמחשב מבין.
 מתכנתים טובים כותבים קוד שבני אדם מבינים."
 - Martin Fowler
-""",
+''',
         'exercise': {
             'question': 'מה הפורמט הנכון של Type Hint לפונקציה שמקבלת int ומחזירה str?',
             'options': ['def func(x) -> str:', 'def func(x: int) -> str:', 'def func(x: str) -> int:', 'def func(x): -> str'],
