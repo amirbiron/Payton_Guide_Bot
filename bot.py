@@ -1,7 +1,39 @@
 import os
 import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    filters,
+    ContextTypes,
+)
+
+try:
+    from telegram.ext import Updater
+except ImportError:  # pragma: no cover - מתקיים רק בגרסאות עתידיות
+    Updater = None
+
+
+def _patch_updater_slots():
+    """Workaround for python-telegram-bot < 20.9 on Python 3.13."""
+    if Updater is None:
+        return
+
+    slots = getattr(Updater, "__slots__", None)
+    if not slots:
+        return
+
+    if isinstance(slots, str):
+        slots = (slots,)
+
+    missing_slot = "_Updater__polling_cleanup_cb"
+    if missing_slot not in slots:
+        Updater.__slots__ = tuple(slots) + (missing_slot,)
+
+
+_patch_updater_slots()
 
 # ====================
 # הגדרות חיבור
