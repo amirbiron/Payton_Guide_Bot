@@ -1,7 +1,39 @@
 import os
 import json
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    filters,
+    ContextTypes,
+)
+
+try:
+    from telegram.ext import Updater
+except ImportError:  # pragma: no cover - מתקיים רק בגרסאות עתידיות
+    Updater = None
+
+
+def _patch_updater_slots():
+    """Workaround for python-telegram-bot < 20.9 on Python 3.13."""
+    if Updater is None:
+        return
+
+    slots = getattr(Updater, "__slots__", None)
+    if not slots:
+        return
+
+    if isinstance(slots, str):
+        slots = (slots,)
+
+    missing_slot = "_Updater__polling_cleanup_cb"
+    if missing_slot not in slots:
+        Updater.__slots__ = tuple(slots) + (missing_slot,)
+
+
+_patch_updater_slots()
 
 # ====================
 # הגדרות חיבור
@@ -13,8 +45,19 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 # MongoDB URI - מומלץ להשתמש ב-environment variable
 MONGODB_URI = os.environ.get("MONGODB_URI", "")
 
-# האם להשתמש ב-MongoDB (אם יש URI)
-USE_MONGODB = bool(MONGODB_URI)
+def _env_str_to_bool(value):
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+_use_mongodb_env = os.environ.get("USE_MONGODB")
+if _use_mongodb_env is not None:
+    USE_MONGODB = _env_str_to_bool(_use_mongodb_env)
+else:
+    USE_MONGODB = bool(MONGODB_URI)
+
+if USE_MONGODB and not MONGODB_URI:
+    print("⚠️ USE_MONGODB=true אך לא קיים MONGODB_URI - משתמש ב-JSON.")
+    USE_MONGODB = False
 
 # נתיב לקובץ JSON (fallback לפיתוח מקומי)
 USER_DATA_FILE = "user_progress.json"
