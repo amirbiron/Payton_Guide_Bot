@@ -1,5 +1,6 @@
 import os
 import json
+import importlib
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -21,16 +22,47 @@ def _patch_updater_slots():
     if Updater is None:
         return
 
-    slots = getattr(Updater, "__slots__", None)
-    if not slots:
+    try:
+        updater_module = importlib.import_module("telegram.ext._updater")
+    except ModuleNotFoundError:
         return
 
-    if isinstance(slots, str):
-        slots = (slots,)
+    base_updater = getattr(updater_module, "Updater", None)
+    if base_updater is None:
+        return
 
-    missing_slot = "_Updater__polling_cleanup_cb"
-    if missing_slot not in slots:
-        Updater.__slots__ = tuple(slots) + (missing_slot,)
+    slots = tuple(getattr(base_updater, "__slots__", ()))
+    missing = tuple(
+        slot for slot in ("_Updater__polling_cleanup_cb",) if slot not in slots
+    )
+    if not missing:
+        return
+
+    patched_slots = slots + missing
+
+    class _PatchedUpdater(base_updater):  # type: ignore[misc, valid-type]
+        __slots__ = patched_slots
+
+    _PatchedUpdater.__name__ = base_updater.__name__
+    _PatchedUpdater.__qualname__ = base_updater.__qualname__
+    _PatchedUpdater.__doc__ = base_updater.__doc__
+    _PatchedUpdater.__module__ = base_updater.__module__
+
+    updater_module.Updater = _PatchedUpdater
+
+    try:
+        application_builder_module = importlib.import_module("telegram.ext._applicationbuilder")
+        application_builder_module.Updater = _PatchedUpdater
+    except ModuleNotFoundError:
+        pass
+
+    try:
+        ext_module = importlib.import_module("telegram.ext")
+        ext_module.Updater = _PatchedUpdater
+    except ModuleNotFoundError:
+        pass
+
+    globals()["Updater"] = _PatchedUpdater
 
 
 _patch_updater_slots()
