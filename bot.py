@@ -124,7 +124,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 אני כאן כדי ללמד אותך Python מההתחלה ועד רמה מתקדמת!
 
 📚 <b>מה יש לי להציע:</b>
-• 20 שיעורים מקיפים
+• {TOTAL_LESSONS} שיעורים מקיפים
 • הסברים ברורים וכיפיים בעברית
 • תרגילים אינטראקטיביים
 • מעקב אחר ההתקדמות שלך
@@ -490,10 +490,10 @@ async def skip_exercise(query, lesson_number):
 
 async def show_completion(query):
     """הצגת מסך סיום"""
-    completion_text = """
+    completion_text = f"""
 🎓 <b>מזל טוב!</b> 🎉
 
-סיימת את כל 20 השיעורים של Python! 🐍
+סיימת את כל {TOTAL_LESSONS} השיעורים של Python! 🐍
 
 <b>מה למדת:</b>
 • יסודות Python
