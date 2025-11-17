@@ -270,16 +270,16 @@ print_info(name="אמיר", age=25, city="תל אביב")</code>
 
 💪 <b>docstring - תיעוד פונקציה:</b>
 <code>def calculate_area(width, height):
-    """
-    מחשב שטח מלבן.
-    
-    Args:
-        width: רוחב המלבן
-        height: גובה המלבן
-    
-    Returns:
-        שטח המלבן
-    """
+      '''
+      מחשב שטח מלבן.
+      
+      Args:
+          width: רוחב המלבן
+          height: גובה המלבן
+      
+      Returns:
+          שטח המלבן
+      '''
     return width * height
 
 # גישה לתיעוד:
